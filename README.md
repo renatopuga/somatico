@@ -261,7 +261,7 @@ Call somatic SNVs and indels via local assembly of haplotypes
 ### Mutect2 Tumor e Normal
 
 ```bash
-./gatk-4.2.2.0/gatk Mutect2 -R chr9.fa -I tumor_JAK2.bam -I normal_JAK2.bam -normal WP018 --germline-resource af-only-gnomad-chr9.vcf.gz -O somatic.vcf.gz -L chr9.interval_list
+./gatk-4.2.2.0/gatk Mutect2 -R chr9.fa -I tumor_JAK2.bam -I normal_JAK2.bam -normal WP044 --germline-resource af-only-gnomad-chr9.vcf.gz -O somatic.vcf.gz -L chr9.interval_list
 ```
 
 
