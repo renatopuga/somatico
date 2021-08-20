@@ -1,7 +1,13 @@
 # Análise Somática
 GATK 4 Mutect2 Somático
 
-## T12020 - Aula Prática Somático
+# T12020 - Aula Prática Somático
+
+> 2021-08-20 - Renato Puga
+
+[TOC]
+
+
 
 ## Pipeline
 
@@ -25,7 +31,7 @@ samtools view -h -b /Volumes/Seagate\ Expansion\ Drive/data-lpfap10/projects/pro
 ```
 
 ```bash
-samtools view -h -b /Volumes/Seagate\ Expansion\ Drive/data-lpfap10/projects/proadi/exome/bam/WP018/WP018.bam 9:5021937-5126899 | samtools bam2fq -1 normal_R1.fq -2 normal_R2.fq - 
+samtools view -h -b /Volumes/Seagate\ Expansion\ Drive/data-lpfap10/projects/proadi/exome/bam/WP044/WP044.bam 9:5021937-5126899 | samtools bam2fq -1 normal_R1.fq -2 normal_R2.fq - 
 ```
 
 
@@ -39,7 +45,7 @@ samtools view -h -b /Volumes/Seagate\ Expansion\ Drive/data-lpfap10/projects/pro
 ```
 
 ```bash
-samtools view -h -b /Volumes/Seagate\ Expansion\ Drive/data-lpfap10/projects/proadi/exome/bam/WP018/WP018.bam 9:5021937-5126899 > normal_JAK2.bam
+samtools view -h -b /Volumes/Seagate\ Expansion\ Drive/data-lpfap10/projects/proadi/exome/bam/WP044/WP044.bam 9:5021937-5126899 > normal_JAK2.bam
 ```
 
 * Gerar index do BAM (.BAI)
