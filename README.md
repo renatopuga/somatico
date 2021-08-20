@@ -1,7 +1,7 @@
 # Análise Somática
 GATK 4 Mutect2 Somático
 
-# T12020 - Aula Prática Somático
+# T12020 - Aula Prática
 
 ![image](https://user-images.githubusercontent.com/8321336/130251648-7ad77cae-435f-49be-950f-b7af5f59fd7a.png)
 
