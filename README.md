@@ -317,4 +317,15 @@ Functional Annotator
 ./gatk-4.2.2.0/gatk Funcotator --data-sources-path funcotator_dataSources.v1.7.20200521s -O funcotator.maf --output-file-format MAF --ref-version hg19 --reference chr9.fa --variant filtered.vcf.gz
 ```
 
+* Download Funcotator
+
+```bash
+wget -c ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/funcotator/funcotator_dataSources.v1.7.20200521s.tar.gz
+```
+
+* Descompactar
+
+```bash
+tar -zxvf funcotator_dataSources.v1.7.20200521s.tar.gz
+```
 
