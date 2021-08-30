@@ -32,6 +32,7 @@ wget -c https://hgdownload.soe.ucsc.edu/goldenPath/hg19/chromosomes/chr9.fa.gz
 ```
 
 * Alterar nome do header: DE: >chr9 para >9
+> Essa alteração é necessária pois no BAM a referência não tinha `>chr` era apenas `>9`.
 
 ```bash
 zcat chr9.fa.gz | sed -e "s/chr//g" > chr9.fa
@@ -42,7 +43,7 @@ zcat chr9.fa.gz | sed -e "s/chr//g" > chr9.fa
 ```bash
 head chr9.fa
 ```
-> head lerá as 10 primeiras linha de um arquivo texto
+> O comando `head` lê as 10 primeiras linha de um arquivo texto
 
 
 ## samtools
