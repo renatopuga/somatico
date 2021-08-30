@@ -81,17 +81,6 @@ docker pull biocontainers/samtools
 samtools faidx chr9.fa
 ```
 
-* samtools index
-
-```bash
-samtools index tumor_JAK2.bam
-```
-
-```bash
-samtools index normal_JAK2.bam
-```
-
-
 
 ## GATK4
 
