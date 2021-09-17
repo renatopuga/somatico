@@ -194,8 +194,61 @@ Filter somatic SNVs and indels called by Mutect2
 ```
 
 
+## Panel of Normal (PoN)
 
-## Funcotator (não testar essa parte)
+
+# Panel of Normal (PoN)
+
+GATK Best Practices - Exome PoN
+
+
+* vcf
+
+```bash
+wget -c https://storage.googleapis.com/gatk-best-practices/somatic-b37/Mutect2-exome-panel.vcf
+```
+
+* vcf.idx
+
+```bash
+wget -c https://storage.googleapis.com/gatk-best-practices/somatic-b37/Mutect2-exome-panel.vcf.idx
+```
+
+* Mutect2
+
+```bash
+./gatk-4.2.2.0/gatk Mutect2 \
+  -R hg19.fa \
+  -I tumor_wp190.bam \
+  --germline-resource af-only-gnomad-chr13-chr19.vcf.gz \
+  --panel-of-normals Mutect2-exome-panel.vcf \
+  -L hg19.interval_list \
+  -O WP190.somatic.pon.vcf.gz
+  
+```
+
+* CalculateContamination somente com o table do tumor (ex.: wp190)
+
+```bash
+./gatk-4.2.2.0/gatk CalculateContamination \
+	-I tumor_wp190.table \
+	-O WP190.contamination.pon.table
+```
+
+* FilterMutectCalls
+
+```bash
+./gatk-4.2.2.0/gatk FilterMutectCalls \
+	-R hg19.fa \
+	-V WP190.somatic.pon.vcf.gz \
+	--contamination-table WP190.contamination.pon.table \
+	-O WP190.filtered.pon.vcf.gz
+```
+
+
+
+
+## Funcotator (não testar essa parte) NAAAAAAAOOOOO
 
 Functional Annotator
 
