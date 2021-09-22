@@ -1,5 +1,8 @@
 [![Gitpod ready-to-code](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/renatopuga/somatico)
 
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1r4LDUiQqirUFQT2nIrhVW_AHLaBhmS7y?usp=sharing)
+
+
 # Análise Somática
 GATK 4 Mutect2 Somático
 
@@ -146,9 +149,17 @@ Call somatic SNVs and indels via local assembly of haplotypes
 
 
 ### Mutect2 Tumor e Normal
+> O comando: `samtools view -H normal_JAK2.bam` você consegue pegar o campo SM: que contém o ID da amostra normal.
 
 ```bash
-./gatk-4.2.2.0/gatk Mutect2 -R chr9.fa -I tumor_JAK2.bam -I normal_JAK2.bam -normal WP044 --germline-resource af-only-gnomad-chr9.vcf.gz -O somatic.vcf.gz -L chr9.interval_list
+./gatk-4.2.2.0/gatk Mutect2 \
+	-R chr9.fa \
+	-I tumor_JAK2.bam \
+	-I normal_JAK2.bam \
+	-normal WP044 \
+	--germline-resource af-only-gnomad-chr9.vcf.gz \
+	-O somatic.vcf.gz \
+	-L chr9.interval_list
 ```
 
 
@@ -164,13 +175,21 @@ Tabulates pileup metrics for inferring contamination
 * GetPileupSummaries Tumor
 
 ```bash
-./gatk-4.2.2.0/gatk GetPileupSummaries -I tumor_JAK2.bam -V af-only-gnomad-chr9.vcf.gz -L chr9.interval_list  -O tumor_JAK2.table
+./gatk-4.2.2.0/gatk GetPileupSummaries \
+	-I tumor_JAK2.bam \
+	-V af-only-gnomad-chr9.vcf.gz \
+	-L chr9.interval_list \
+	-O tumor_JAK2.table
 ```
 
 * GetPileupSummaries Normal
 
 ```bash
-./gatk-4.2.2.0/gatk GetPileupSummaries -I normal_JAK2.bam -V af-only-gnomad-chr9.vcf.gz -L chr9.interval_list  -O normal_JAK2.table
+./gatk-4.2.2.0/gatk GetPileupSummaries \
+	-I normal_JAK2.bam \
+	-V af-only-gnomad-chr9.vcf.gz \
+	-L chr9.interval_list \
+	-O normal_JAK2.table
 ```
 
 
@@ -180,7 +199,10 @@ Tabulates pileup metrics for inferring contamination
 Calculate the fraction of reads coming from cross-sample contamination
 
 ```bash
-./gatk-4.2.2.0/gatk CalculateContamination -I tumor_JAK2.table -matched normal_JAK2.table -O contamination.table
+./gatk-4.2.2.0/gatk CalculateContamination \
+	-I tumor_JAK2.table \
+	-matched normal_JAK2.table \
+	-O contamination.table
 ```
 
 
@@ -190,8 +212,39 @@ Calculate the fraction of reads coming from cross-sample contamination
 Filter somatic SNVs and indels called by Mutect2
 
 ```bash
-./gatk-4.2.2.0/gatk FilterMutectCalls -R chr9.fa -V somatic.vcf.gz --contamination-table contamination.table -O filtered.vcf.gz
+./gatk-4.2.2.0/gatk FilterMutectCalls \
+	-R chr9.fa \
+	-V somatic.vcf.gz \
+	--contamination-table contamination.table \
+	-O filtered.vcf.gz
 ```
+
+## VEP ensembl - Anotação
+
+### VEP install
+
+```bash
+docker pull ensemblorg/ensembl-vep
+```
+
+* Criar diretório de output do VEP com permissão total
+
+```bash
+mkdir -p vep_output
+chmod 777 vep_output
+```
+
+```bash
+docker run -it --rm  -v $(pwd):/data ensemblorg/ensembl-vep ./vep  \
+	-i /data/vep_output/filtered.vcf.gz  \
+	-o /data/vep_output/filtered.vep.tsv \
+	--database --assembly GRCh37 --refseq  \
+	--pick --pick_allele --force_overwrite --tab --symbol --check_existing \
+	--fields "Location,SYMBOL,Consequence,Feature,Amino_acids,CLIN_SIG" \
+	--fasta /data/chr9.fa \
+	--individual all 
+```
+
 
 
 ## Panel of Normal (PoN)
@@ -248,35 +301,8 @@ wget -c https://storage.googleapis.com/gatk-best-practices/somatic-b37/Mutect2-e
 
 
 
-## Funcotator (não testar essa parte) NAAAAAAAOOOOO
-
-Functional Annotator
-
-* 30G Source Somatic (1s)
-  *  ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/funcotator/funcotator_dataSources.v1.7.20200521s.tar.gz
-
-* Download Funcotator
-
-```bash
-wget -c ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/funcotator/funcotator_dataSources.v1.7.20200521s.tar.gz
-```
-
-* Descompactar
-
-```bash
-tar -zxvf funcotator_dataSources.v1.7.20200521s.tar.gz
-```
-
-* Anotar
-
-```bash
-./gatk-4.2.2.0/gatk Funcotator --data-sources-path funcotator_dataSources.v1.7.20200521s -O funcotator.maf --output-file-format MAF --ref-version hg19 --reference chr9.fa --variant filtered.vcf.gz
-```
-
-
 
 # Anexo 1
-
 
 ### Converter BAM para FASTQ
 
