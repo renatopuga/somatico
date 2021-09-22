@@ -344,6 +344,7 @@ samtools index normal_JAK2.bam
 
 
 ### af-only-gnomad.vcf.gz (apenas região JAK2)
+> [Google Clou af-only-gnomad.vcf.gz](https://console.cloud.google.com/storage/browser/gatk-best-practices/somatic-b37;tab=objects?project=broad-dsde-outreach&pageState=(%22StorageObjectListTable%22:(%22f%22:%22%255B%255D%22))&forceOnObjectsSortingFiltering=false&pli=1)
 
 * Header do VCF
 
