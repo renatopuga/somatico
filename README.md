@@ -24,7 +24,7 @@ GATK 4 Mutect2 Somático
 
 
 ## Workflow
-Os arquivos BA (tumor e normal) já foram gerados e estão prontos para a chamada de variates (ver Anexo 1). Então, agora vamos fazer download da referência `chr9` e gerar o index com o programa `samtools`.
+Os arquivos BAM (tumor e normal) já foram gerados e estão prontos para a chamada de variates (ver Anexo 1). Então, agora vamos fazer download da referência `chr9` e gerar o index com o programa `samtools`.
 
 ### Download da Referência - chr9
 
