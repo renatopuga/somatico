@@ -236,7 +236,7 @@ chmod 777 vep_output
 
 ```bash
 docker run -it --rm  -v $(pwd):/data ensemblorg/ensembl-vep ./vep  \
-	-i /data/vep_output/filtered.vcf.gz  \
+	-i /data/filtered.vcf.gz  \
 	-o /data/vep_output/filtered.vep.tsv \
 	--database --assembly GRCh37 --refseq  \
 	--pick --pick_allele --force_overwrite --tab --symbol --check_existing \
