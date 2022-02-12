@@ -229,6 +229,45 @@ docker pull ensemblorg/ensembl-vep
 
 * Criar diretório de output do VEP com permissão total
 
+Voltar para a casa
+```
+cd
+```
+
+Verificar se o diretório é o /home/gitpod
+```
+pwd
+```
+> ex.: /home/gitpod
+
+Copiar o arquivo filtered.vcf.gz
+```
+cp /workspace/somatico/filtered.vcf.gz .
+```
+
+Copiar o arquivo chr9.fa
+```
+cp /workspace/somatico/chr9.fa .
+```
+
+Copiar o arquivo chr9.fa.fai
+```
+cp /workspace/somatico/chr9.fa.fai .
+```
+
+
+Criar o diretorio vep_output
+```
+mkdir -p vep_output
+```
+
+Modificar a permissao do diretorio vep_output
+```
+chmod 777 vep_output
+```
+
+# rodar o vep
+
 ```bash
 mkdir -p vep_output
 chmod 777 vep_output
