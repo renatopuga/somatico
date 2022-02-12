@@ -227,7 +227,7 @@ Filter somatic SNVs and indels called by Mutect2
 docker pull ensemblorg/ensembl-vep
 ```
 
-* Criar diretório de output do VEP com permissão total
+* Criar diretório de output do VEP com permissão total (aplicado apenas no gitpod)
 
 Voltar para a casa
 ```
@@ -266,12 +266,14 @@ Modificar a permissao do diretorio vep_output
 chmod 777 vep_output
 ```
 
-# rodar o vep
+* Aplicar apenas no Google Colab
 
 ```bash
 mkdir -p vep_output
 chmod 777 vep_output
 ```
+
+# rodar o vep
 
 ```bash
 docker run -it --rm  -v $(pwd):/data ensemblorg/ensembl-vep ./vep  \
