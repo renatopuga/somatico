@@ -28,6 +28,7 @@ GATK 4 Mutect2 Somático
 - WP017 (tumor) e WP018 (normal)
 
 **Nota 1:** Utilizar o af-gnomad chr13 e chr19. 
+
 **Nota 2:** Será preciso baixar o chr13 e chr19 da UCSC.
 
 
