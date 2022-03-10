@@ -22,6 +22,14 @@ GATK 4 Mutect2 Somático
 * https://gatk.broadinstitute.org/hc/en-us/articles/360035894731-Somatic-short-variant-discovery-SNVs-Indels-
 
 
+## Amostras Extras
+
+- WP190 (tumor) e WP191 (normal)
+- WP017 (tumor) e WP018 (normal)
+
+**Nota 1:** Utilizar o af-gnomad chr13 e chr19. 
+**Nota 2:** Será preciso baixar o chr13 e chr19 da UCSC.
+
 
 ## Workflow
 Os arquivos BAM (tumor e normal) já foram gerados e estão prontos para a chamada de variates (ver Anexo 1). Então, agora vamos fazer download da referência `chr9` e gerar o index com o programa `samtools`.
