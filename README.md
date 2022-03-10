@@ -31,6 +31,30 @@ GATK 4 Mutect2 Somático
 
 **Nota 2:** Será preciso baixar o chr13 e chr19 da UCSC.
 
+**Download chr19**
+```bash
+wget -c https://hgdownload.soe.ucsc.edu/goldenPath/hg19/chromosomes/chr19.fa.gz
+```
+
+**Download chr13**
+```bash
+wget -c https://hgdownload.soe.ucsc.edu/goldenPath/hg19/chromosomes/chr13.fa.gz
+```
+
+**Concatenar os arquivos .fa.gz**
+> Dica 1: zcat lê arquivos compactados .gz e zip
+
+```bash
+zcat chr13.fa.gz chr19.fa.gz | sed -e "s/chr//g" > hg19.fa
+```
+
+**Gerar o index do arquivo hg19.fa**
+```bash
+samtools faidx hg19.fa
+```
+
+
+
 
 ## Workflow
 Os arquivos BAM (tumor e normal) já foram gerados e estão prontos para a chamada de variates (ver Anexo 1). Então, agora vamos fazer download da referência `chr9` e gerar o index com o programa `samtools`.
