@@ -462,7 +462,23 @@ tabix -p vcf af-only-gnomad-chr9.vcf.gz
 
 # Anexo 2
 
-Rodar amostras extras pareadas: wp190 (tumor) wp191 (normal).
+Rodar amostras extras pareadas:
+
+* Com par:
+```bash
+sh run.chr13-chr19.sh tumor_JAK2.bam normal_JAK2.bam WP043 WP044
+sh run.chr13-chr19.sh tumor_wp017.bam tumor_wp018.bam WP017 WP018
+sh run.chr13-chr19.sh tumor_wp190.bam tumor_wp191.bam WP190 WP191
+```
+
+* Com PoN:
+```bash
+sh run.chr13-chr19.pon.sh tumor_JAK2.bam normal_JAK2.bam WP043 WP044 
+sh run.chr13-chr19.pon.sh tumor_wp017.bam tumor_wp018.bam WP017 WP018 
+sh run.chr13-chr19.pon.sh tumor_wp190.bam tumor_wp191.bam WP190 WP191 
+
+```
+
 
 
 ```bash
