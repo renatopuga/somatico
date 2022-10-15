@@ -537,9 +537,6 @@ id_normal=$4
 Rodar amostras extras com Panel of Normal (broad institute).
 
 ```bash
-#####
-# rodando o par wp190 (tumor) wp191 (normal)
-#####
 
 # variaveis fixas
 gnomad="af-only-gnomad-chr13-chr19.vcf.gz"
