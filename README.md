@@ -41,6 +41,8 @@ wget -c https://hgdownload.soe.ucsc.edu/goldenPath/hg19/chromosomes/chr19.fa.gz
 wget -c https://hgdownload.soe.ucsc.edu/goldenPath/hg19/chromosomes/chr13.fa.gz
 ```
 
+
+
 **Concatenar os arquivos .fa.gz**
 > Dica 1: zcat lê arquivos compactados .gz e zip
 
@@ -53,6 +55,14 @@ zcat chr13.fa.gz chr19.fa.gz | sed -e "s/chr//g" > hg19.fa
 samtools faidx hg19.fa
 ```
 
+ ____________________ 
+< Primeiro é o chr9 >
+ -------------------- 
+        \   ^__^
+         \  (oo)\_______
+            (__)\       )\/\
+                ||----w |
+                ||     ||
 
 
 
