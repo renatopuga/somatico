@@ -195,10 +195,7 @@ Call somatic SNVs and indels via local assembly of haplotypes
 > O comando: `samtools view -H normal_JAK2.bam` você consegue pegar o campo SM: que contém o ID da amostra normal.
 
 ```bash
-samtools view -H normal_JAK2.bam \|
-grep RG \|
-cut -f6 \|
-sed -e "s/SM://g"
+samtools view -H normal_JAK2.bam | grep RG | cut -f6 | sed -e "s/SM://g"
 ```
 
 
