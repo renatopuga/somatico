@@ -275,35 +275,6 @@ Filter somatic SNVs and indels called by Mutect2
 docker pull ensemblorg/ensembl-vep
 ```
 
-* Criar diretório de output do VEP com permissão total (aplicado apenas no gitpod)
-
-Voltar para a casa
-```
-cd
-```
-
-Verificar se o diretório é o /home/gitpod
-```
-pwd
-```
-> ex.: /home/gitpod
-
-Copiar o arquivo filtered.vcf.gz
-```
-cp /workspace/somatico/filtered.vcf.gz .
-```
-
-Copiar o arquivo chr9.fa
-```
-cp /workspace/somatico/chr9.fa .
-```
-
-Copiar o arquivo chr9.fa.fai
-```
-cp /workspace/somatico/chr9.fa.fai .
-```
-
-
 Criar o diretorio vep_output
 ```
 mkdir -p vep_output
@@ -324,14 +295,7 @@ chmod 777 vep_output
 # rodar o vep
 
 ```bash
-docker run -it --rm  -v $(pwd):/data ensemblorg/ensembl-vep ./vep  \
-	-i /data/filtered.vcf.gz  \
-	-o /data/vep_output/filtered.vep.tsv \
-	--database --assembly GRCh37 --refseq  \
-	--pick --pick_allele --force_overwrite --tab --symbol --check_existing \
-	--fields "Location,SYMBOL,Consequence,Feature,Amino_acids,CLIN_SIG" \
-	--fasta /data/chr9.fa \
-	--individual all 
+bash vep-docker.sh
 ```
 
 
