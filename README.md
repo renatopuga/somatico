@@ -1,547 +1,253 @@
-[![Gitpod ready-to-code](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/renatopuga/somatico)
+# Análise de variantes somáticas com GATK Mutect2
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1r4LDUiQqirUFQT2nIrhVW_AHLaBhmS7y?usp=sharing)
+Tutorial prático para compreender uma chamada de variantes somáticas com dados tumor–normal, estimativa de contaminação, filtragem e anotação funcional.
 
+> **Finalidade educacional.** Os arquivos são pequenos recortes genômicos preparados para aula. Este repositório não constitui um pipeline clínico validado e seus resultados não devem ser usados para diagnóstico.
 
-# Análise Somática
-GATK 4 Mutect2 Somático
+## O que você aprenderá
 
-# Aula Prática
+Ao concluir o exercício, você será capaz de:
 
-![image](https://user-images.githubusercontent.com/8321336/130251648-7ad77cae-435f-49be-950f-b7af5f59fd7a.png)
+- reconhecer os arquivos necessários para uma análise tumor–normal;
+- verificar a compatibilidade entre os contigs do BAM, FASTA e VCF;
+- executar `Mutect2`, `GetPileupSummaries`, `CalculateContamination` e `FilterMutectCalls`;
+- comparar uma análise pareada com uma análise tumor-only usando Panel of Normals (PoN);
+- identificar variantes que passaram pelos filtros e preparar o VCF para anotação com VEP.
 
-## Pipeline
+## Escopo e versões
 
-* GATK4 - Mutect2
-* Gene JAK2
-* Referência chr9
-  * Sobre as versões do Genoma Humano: https://gatk.broadinstitute.org/hc/en-us/articles/360035890711-GRCh37-hg19-b37-humanG1Kv37-Human-Reference-Discrepancies#grch37
-* Amostras: 
-  * WP043 (tumor)
-  * WP044 (normal)
-* https://gatk.broadinstitute.org/hc/en-us/articles/360035894731-Somatic-short-variant-discovery-SNVs-Indels-
+| Componente | Configuração deste exercício | Observação |
+|---|---|---|
+| Referência | GRCh37/hg19, somente os contigs usados nos exemplos | Mantida por compatibilidade com os BAMs e VCFs didáticos |
+| Nomes dos contigs | `9`, `13` e `19`, sem o prefixo `chr` | Todos os arquivos de entrada precisam usar a mesma convenção |
+| GATK | 4.6.2.0 | Versão fixada para reprodutibilidade |
+| VEP | imagem Docker `release_116.0` | Executado em modo database; requer internet |
 
+Para projetos novos, escolha a montagem de referência e os recursos populacionais de forma explícita. Não misture GRCh37/hg19 com GRCh38, nem arquivos com e sem o prefixo `chr`.
 
-## Amostras Extras
+## Visão geral do fluxo
 
-- WP190 (tumor) e WP191 (normal)
-- WP017 (tumor) e WP018 (normal)
+1. Preparar e indexar a referência FASTA.
+2. Confirmar o identificador da amostra normal no read group do BAM.
+3. Chamar SNVs e indels somáticos com Mutect2.
+4. Estimar contaminação com os sítios populacionais do gnomAD.
+5. Filtrar as chamadas.
+6. Inspecionar variantes `PASS` e, opcionalmente, anotar com VEP.
 
-**Nota 1:** Utilizar o af-gnomad chr13 e chr19. 
+## Arquivos incluídos
 
-**Nota 2:** Será preciso baixar o chr13 e chr19 da UCSC.
+| Arquivo | Papel no exercício |
+|---|---|
+| `tumor_JAK2.bam` / `.bai` | Recorte tumoral da região de `JAK2` no cromossomo 9 |
+| `normal_JAK2.bam` / `.bai` | Normal pareado do exemplo `JAK2` |
+| `tumor_wp017.bam` e `tumor_wp018.bam` | Par tumor–normal adicional |
+| `tumor_wp190.bam` e `tumor_wp191.bam` | Par tumor–normal adicional |
+| `af-only-gnomad-*.vcf.gz` / `.tbi` | Sítios populacionais usados pelo Mutect2 e pela estimativa de contaminação |
+| `somatic.Pon.vcf` | Pequeno VCF de exemplo; não substitui o PoN oficial usado na atividade |
+| `run.chr13-chr19.sh` | Pipeline tumor–normal para os exemplos dos cromossomos 13 e 19 |
+| `run.chr13-chr19.pon.sh` | Pipeline tumor-only com PoN |
+| `vep-docker.sh` | Anotação do VCF filtrado com VEP em Docker |
+| `somatico_google_colab.ipynb` | Aula guiada para Google Colab |
 
-**Download chr19**
+## Início rápido: exemplo JAK2
+
+### 1. Pré-requisitos
+
+Para a execução local, instale:
+
+- Bash;
+- `wget`, `gzip` e `unzip`;
+- [samtools](https://www.htslib.org/);
+- Java compatível com a versão do GATK;
+- Docker, apenas para a etapa opcional com VEP.
+
+Clone o repositório:
+
 ```bash
-wget -c https://hgdownload.soe.ucsc.edu/goldenPath/hg19/chromosomes/chr19.fa.gz
+git clone https://github.com/renatopuga/somatico.git
+cd somatico
 ```
 
-**Download chr13**
-```bash
-wget -c https://hgdownload.soe.ucsc.edu/goldenPath/hg19/chromosomes/chr13.fa.gz
-```
+Alternativamente, abra o notebook no Colab:
 
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/renatopuga/somatico/blob/main/somatico_google_colab.ipynb)
 
-
-**Concatenar os arquivos .fa.gz**
-> Dica 1: zcat lê arquivos compactados .gz e zip
+### 2. Baixar o GATK
 
 ```bash
-zcat chr13.fa.gz chr19.fa.gz | sed -e "s/chr//g" > hg19.fa
+wget -c https://github.com/broadinstitute/gatk/releases/download/4.6.2.0/gatk-4.6.2.0.zip
+unzip gatk-4.6.2.0.zip
+./gatk-4.6.2.0/gatk --version
 ```
 
-**Gerar o index do arquivo hg19.fa**
-```bash
-samtools faidx hg19.fa
-```
+### 3. Preparar a referência do cromossomo 9
 
- ____________________ 
-< Primeiro é o chr9 >
- -------------------- 
-        \   ^__^
-         \  (oo)\_______
-            (__)\       )\/\
-                ||----w |
-                ||     ||
-
-
-
-## Workflow
-Os arquivos BAM (tumor e normal) já foram gerados e estão prontos para a chamada de variates (ver Anexo 1). Então, agora vamos fazer download da referência `chr9` e gerar o index com o programa `samtools`.
-
-### Download da Referência - chr9
-
-* Download 
+Os BAMs do exercício usam o contig `9`, enquanto o FASTA da UCSC usa `chr9`. O comando abaixo remove o prefixo somente do cabeçalho FASTA.
 
 ```bash
 wget -c https://hgdownload.soe.ucsc.edu/goldenPath/hg19/chromosomes/chr9.fa.gz
-```
+zcat chr9.fa.gz | sed '/^>/ s/^>chr/>/' > chr9.fa
 
-* Alterar nome do header: DE: >chr9 para >9
-> Essa alteração é necessária pois no BAM a referência não tinha `>chr` era apenas `>9`.
-
-```bash
-zcat chr9.fa.gz | sed -e "s/chr//g" > chr9.fa
-```
-
-* Verificar se alteração foi feita com o comando `head`
-
-```bash
-head chr9.fa
-```
-> O comando `head` lê as 10 primeiras linha de um arquivo texto
-
-
-## samtools
-
-Samtools is a suite of programs for interacting with high-throughput sequencing data. It consists of three separate repositories:
-
-
-
-### samtools install
-
-* samtools install (Mac)
-
-```bash
-brew install samtools 
-```
-
-* samtools install (Ubuntu)
-
-```bash
-sudo apt-get install samtools 
-```
-
-* samtools install (Docker)
-
-```bash
-docker pull biocontainers/samtools
-```
-
-
-
-### samtools faidx e index
-
-* samtools faidx
-
-```bash
 samtools faidx chr9.fa
+./gatk-4.6.2.0/gatk CreateSequenceDictionary \
+  -R chr9.fa \
+  -O chr9.dict
+
+./gatk-4.6.2.0/gatk ScatterIntervalsByNs \
+  -R chr9.fa \
+  -O chr9.interval_list \
+  -OT ACGT
 ```
 
-
-## GATK4
-
-> Version: 4.2.2.0
-
-Genome Analysis Toolkit - Variant Discovery in High-Throughput Sequencing Data. https://gatk.broadinstitute.org/
-
-
-
-### GATK4 install
-
-GATK4 install Docker
+Verifique se os três recursos usam o mesmo contig:
 
 ```bash
-docker pull broadinstitute/gatk:4.2.2.0
+samtools view -H tumor_JAK2.bam | grep '^@SQ' | head
+grep '^>' chr9.fa | head
+bcftools view -h af-only-gnomad-chr9.vcf.gz | grep '^##contig' | head
 ```
 
+### 4. Confirmar o nome da amostra normal
 
-
-GATK4 install Mac e Linux
-
-* Download
+O valor informado em `-normal` deve ser exatamente igual ao campo `SM` do read group:
 
 ```bash
-wget -c https://github.com/broadinstitute/gatk/releases/download/4.2.2.0/gatk-4.2.2.0.zip
+samtools view -H normal_JAK2.bam \
+  | awk -F '\t' '$1=="@RG" {for (i=1; i<=NF; i++) if ($i ~ /^SM:/) {sub(/^SM:/,"",$i); print $i}}'
 ```
 
-* Descompactar
+Para os arquivos deste exemplo, o identificador esperado é `WP044`.
+
+### 5. Executar Mutect2 e estimar contaminação
 
 ```bash
-unzip gatk-4.2.2.0.zip 
+./gatk-4.6.2.0/gatk Mutect2 \
+  -R chr9.fa \
+  -I tumor_JAK2.bam \
+  -I normal_JAK2.bam \
+  -normal WP044 \
+  --germline-resource af-only-gnomad-chr9.vcf.gz \
+  -L chr9.interval_list \
+  -O somatic.vcf.gz
+
+./gatk-4.6.2.0/gatk GetPileupSummaries \
+  -R chr9.fa \
+  -I tumor_JAK2.bam \
+  -V af-only-gnomad-chr9.vcf.gz \
+  -L chr9.interval_list \
+  -O tumor_JAK2.table
+
+./gatk-4.6.2.0/gatk GetPileupSummaries \
+  -R chr9.fa \
+  -I normal_JAK2.bam \
+  -V af-only-gnomad-chr9.vcf.gz \
+  -L chr9.interval_list \
+  -O normal_JAK2.table
+
+./gatk-4.6.2.0/gatk CalculateContamination \
+  -I tumor_JAK2.table \
+  -matched normal_JAK2.table \
+  -O contamination.table
 ```
 
-* Testando gatk
+### 6. Filtrar e inspecionar as chamadas
 
 ```bash
-./gatk-4.2.2.0/gatk
+./gatk-4.6.2.0/gatk FilterMutectCalls \
+  -R chr9.fa \
+  -V somatic.vcf.gz \
+  --contamination-table contamination.table \
+  -O filtered.vcf.gz
+
+bcftools view -f PASS filtered.vcf.gz
 ```
 
+O VCF bruto preserva evidências candidatas; o VCF filtrado adiciona decisões no campo `FILTER`. Em uma análise real, revise também profundidade, VAF, qualidade, orientação das reads, artefatos técnicos e evidência clínica.
 
+## Exemplos dos cromossomos 13 e 19
 
-### GATK4 .dict
+Prepare uma referência combinada com nomes de contig compatíveis:
 
 ```bash
-./gatk-4.2.2.0/gatk CreateSequenceDictionary -R chr9.fa -O chr9.dict
+wget -c https://hgdownload.soe.ucsc.edu/goldenPath/hg19/chromosomes/chr13.fa.gz
+wget -c https://hgdownload.soe.ucsc.edu/goldenPath/hg19/chromosomes/chr19.fa.gz
+zcat chr13.fa.gz chr19.fa.gz | sed '/^>/ s/^>chr/>/' > hg19.fa
+
+samtools faidx hg19.fa
+./gatk-4.6.2.0/gatk CreateSequenceDictionary -R hg19.fa -O hg19.dict
+./gatk-4.6.2.0/gatk ScatterIntervalsByNs -R hg19.fa -O hg19.interval_list -OT ACGT
 ```
 
-
-
-### GATK4 intervals
+Pipeline tumor–normal:
 
 ```bash
-./gatk-4.2.2.0/gatk ScatterIntervalsByNs -R chr9.fa -O chr9.interval_list -OT ACGT
+bash run.chr13-chr19.sh tumor_wp017.bam tumor_wp018.bam WP017 WP018
+bash run.chr13-chr19.sh tumor_wp190.bam tumor_wp191.bam WP190 WP191
 ```
 
-
-
-## Mutect2
-
-Call somatic SNVs and indels via local assembly of haplotypes
-
-
-
-### Mutect2 Tumor e Normal
-> O comando: `samtools view -H normal_JAK2.bam` você consegue pegar o campo SM: que contém o ID da amostra normal.
+Os resultados são gravados em `results/`. Você pode alterar os caminhos por variáveis de ambiente:
 
 ```bash
-samtools view -H normal_JAK2.bam | grep RG | cut -f6 | sed -e "s/SM://g"
+GATK_CMD=/caminho/para/gatk \
+GENOME=/referencias/hg19.fa \
+GNOMAD=/referencias/af-only-gnomad-chr13-chr19.vcf.gz \
+INTERVALS=/referencias/hg19.interval_list \
+OUTPUT_DIR=results \
+bash run.chr13-chr19.sh tumor.bam normal.bam TUMOR_ID NORMAL_ID
 ```
 
+## Tumor-only com Panel of Normals
 
-```bash
-./gatk-4.2.2.0/gatk Mutect2 \
-	-R chr9.fa \
-	-I tumor_JAK2.bam \
-	-I normal_JAK2.bam \
-	-normal WP044 \
-	--germline-resource af-only-gnomad-chr9.vcf.gz \
-	-O somatic.vcf.gz \
-	-L chr9.interval_list
-```
-
-
-
-## Calcular Contaminação
-
-
-
-### GetPileupSummaries
-
-Tabulates pileup metrics for inferring contamination
-
-* GetPileupSummaries Tumor
-
-```bash
-./gatk-4.2.2.0/gatk GetPileupSummaries \
-	-I tumor_JAK2.bam \
-	-V af-only-gnomad-chr9.vcf.gz \
-	-L chr9.interval_list \
-	-O tumor_JAK2.table
-```
-
-* GetPileupSummaries Normal
-
-```bash
-./gatk-4.2.2.0/gatk GetPileupSummaries \
-	-I normal_JAK2.bam \
-	-V af-only-gnomad-chr9.vcf.gz \
-	-L chr9.interval_list \
-	-O normal_JAK2.table
-```
-
-
-
-### CalculateContamination
-
-Calculate the fraction of reads coming from cross-sample contamination
-
-```bash
-./gatk-4.2.2.0/gatk CalculateContamination \
-	-I tumor_JAK2.table \
-	-matched normal_JAK2.table \
-	-O contamination.table
-```
-
-
-
-### FilterMutectCalls
-
-Filter somatic SNVs and indels called by Mutect2
-
-```bash
-./gatk-4.2.2.0/gatk FilterMutectCalls \
-	-R chr9.fa \
-	-V somatic.vcf.gz \
-	--contamination-table contamination.table \
-	-O filtered.vcf.gz
-```
-
-## VEP ensembl - Anotação
-
-### VEP install
-
-```bash
-docker pull ensemblorg/ensembl-vep
-```
-
-Criar o diretorio vep_output
-```
-mkdir -p vep_output
-```
-
-Modificar a permissao do diretorio vep_output
-```
-chmod 777 vep_output
-```
-
-* Aplicar apenas no Google Colab
-
-```bash
-mkdir -p vep_output
-chmod 777 vep_output
-```
-
-# rodar o vep
-
-```bash
-bash vep-docker.sh
-```
-
-
-
-## Panel of Normal (PoN)
-
-
-# Panel of Normal (PoN)
-
-GATK Best Practices - Exome PoN
-
-
-* vcf
+Baixe o PoN compatível com GRCh37/b37:
 
 ```bash
 wget -c https://storage.googleapis.com/gatk-best-practices/somatic-b37/Mutect2-exome-panel.vcf
-```
-
-* vcf.idx
-
-```bash
 wget -c https://storage.googleapis.com/gatk-best-practices/somatic-b37/Mutect2-exome-panel.vcf.idx
 ```
 
-* Mutect2
+Execute informando apenas o BAM tumoral e seu identificador:
 
 ```bash
-./gatk-4.2.2.0/gatk Mutect2 \
-  -R hg19.fa \
-  -I tumor_wp190.bam \
-  --germline-resource af-only-gnomad-chr13-chr19.vcf.gz \
-  --panel-of-normals Mutect2-exome-panel.vcf \
-  -L hg19.interval_list \
-  -O WP190.somatic.pon.vcf.gz
-  
+bash run.chr13-chr19.pon.sh tumor_wp190.bam WP190
 ```
 
-* CalculateContamination somente com o table do tumor (ex.: wp190)
+O PoN ajuda a remover artefatos recorrentes, mas não substitui um normal pareado. Para uso real, o PoN deve ser construído e validado com amostras normais processadas de modo comparável à coorte analisada.
+
+## Anotação opcional com VEP
+
+Com Docker instalado, o script aceita o VCF de entrada e o TSV de saída:
 
 ```bash
-./gatk-4.2.2.0/gatk CalculateContamination \
-	-I tumor_wp190.table \
-	-O WP190.contamination.pon.table
+bash vep-docker.sh filtered.vcf.gz vep_output/filtered.vep.tsv
 ```
 
-* FilterMutectCalls
+Por padrão, o script usa GRCh37, RefSeq e a imagem `ensemblorg/ensembl-vep:release_116.0`. Como o modo `database` consulta serviços externos, a execução requer internet e pode variar conforme a disponibilidade do Ensembl.
 
-```bash
-./gatk-4.2.2.0/gatk FilterMutectCalls \
-	-R hg19.fa \
-	-V WP190.somatic.pon.vcf.gz \
-	--contamination-table WP190.contamination.pon.table \
-	-O WP190.filtered.pon.vcf.gz
-```
+## Saídas principais
 
+| Saída | Conteúdo |
+|---|---|
+| `*.somatic.vcf.gz` | Chamadas candidatas produzidas pelo Mutect2 |
+| `*.pileups.table` | Contagens usadas para estimar contaminação |
+| `*.contamination.table` | Fração estimada de contaminação |
+| `*.filtered.vcf.gz` | Chamadas com os filtros do Mutect2 |
+| `*.vep.tsv` | Consequências anotadas pelo VEP |
 
+## Problemas frequentes
 
+- **Contigs incompatíveis:** compare os cabeçalhos do BAM, FASTA e VCF. `9` e `chr9` são nomes diferentes.
+- **Normal sample not found:** confirme o campo `SM` com `samtools view -H` e use exatamente esse valor em `-normal`.
+- **Arquivo sem índice:** BAM requer `.bai`; FASTA requer `.fai` e `.dict`; VCF compactado requer `.tbi` ou `.csi`.
+- **Recurso de montagem incorreta:** todos os arquivos devem pertencer à mesma montagem e à mesma convenção de contigs.
+- **VEP sem conexão:** repita mais tarde ou configure cache/FASTA local para uma execução offline reprodutível.
 
+## Referências
 
-# Anexo 1
+- [GATK: somatic short variant discovery](https://gatk.broadinstitute.org/hc/en-us/articles/360035894731-Somatic-short-variant-discovery-SNVs-Indels-)
+- [GATK Mutect2](https://gatk.broadinstitute.org/hc/en-us/articles/360037593851-Mutect2)
+- [Diferenças entre GRCh37, hg19 e b37](https://gatk.broadinstitute.org/hc/en-us/articles/360035890711-GRCh37-hg19-b37-humanG1Kv37-Human-Reference-Discrepancies)
+- [Ensembl Variant Effect Predictor](https://www.ensembl.org/info/docs/tools/vep/index.html)
 
-### Converter BAM para FASTQ
+## Licença
 
-```bash
-samtools view -h -b /Volumes/Seagate\ Expansion\ Drive/data-lpfap10/projects/proadi/exome/bam/WP043/WP043.bam 9:5021937-5126899 | samtools bam2fq -1 tumor_R1.fq -2 tumor_R2.fq - 
-```
-
-```bash
-samtools view -h -b /Volumes/Seagate\ Expansion\ Drive/data-lpfap10/projects/proadi/exome/bam/WP044/WP044.bam 9:5021937-5126899 | samtools bam2fq -1 normal_R1.fq -2 normal_R2.fq - 
-```
-
-
-
-### Converter BAM para JAK2 BAM
-
-Aqui estão os comandos que foram utilizados para gerar os BAMs intermediários e como gerar arquivos FASTQs de regiões específicas do seu arquivo BAM completo.
-> Essas etapas não precisam ser executadas nesse pipeline
-
-* BAM para BAM
-
-```bash
-samtools view -h -b /Volumes/Seagate\ Expansion\ Drive/data-lpfap10/projects/proadi/exome/bam/WP043/WP043.bam 9:5021937-5126899 > tumor_JAK2.bam
-```
-
-```bash
-samtools view -h -b /Volumes/Seagate\ Expansion\ Drive/data-lpfap10/projects/proadi/exome/bam/WP044/WP044.bam 9:5021937-5126899 > normal_JAK2.bam
-```
-
-* Gerar index do BAM (.BAI)
-
-```bash
-samtools index tumor_JAK2.bam 
-```
-
-```bash
-samtools index normal_JAK2.bam 
-```
-
-
-
-### af-only-gnomad.vcf.gz (apenas região JAK2)
-> [Google Clou af-only-gnomad.vcf.gz](https://console.cloud.google.com/storage/browser/gatk-best-practices/somatic-b37;tab=objects?project=broad-dsde-outreach&pageState=(%22StorageObjectListTable%22:(%22f%22:%22%255B%255D%22))&forceOnObjectsSortingFiltering=false&pli=1)
-
-* Header do VCF
-
-```bash
-zgrep -w "\#" af-only-gnomad.raw.sites.chr.vcf.gz > header
-```
-
-* Apenas Região do Gene JAK2
-
-```bash
-zgrep -w "^chr9" af-only-gnomad.raw.sites.chr.vcf.gz  | awk '$2>=5021937 && $2<=5126899' > JAK2.region
-```
-
-* Concatenar header + vcf
-
-```bash
-cat header JAK2.region > af-only-gnomad-chr9.vcf
-```
-
-* Compactar
-
-```bash
-bgzip af-only-gnomad-chr9.vcf
-```
-
-* Index do VCF
-
-```bash
-tabix -p vcf af-only-gnomad-chr9.vcf.gz 
-```
-
-# Anexo 2
-
-Rodar amostras extras pareadas:
-
-* Com par:
-```bash
-sh run.chr13-chr19.sh tumor_JAK2.bam normal_JAK2.bam WP043 WP044
-sh run.chr13-chr19.sh tumor_wp017.bam tumor_wp018.bam WP017 WP018
-sh run.chr13-chr19.sh tumor_wp190.bam tumor_wp191.bam WP190 WP191
-```
-
-* Com PoN:
-```bash
-sh run.chr13-chr19.pon.sh tumor_JAK2.bam normal_JAK2.bam WP043 WP044 
-sh run.chr13-chr19.pon.sh tumor_wp017.bam tumor_wp018.bam WP017 WP018 
-sh run.chr13-chr19.pon.sh tumor_wp190.bam tumor_wp191.bam WP190 WP191 
-
-```
-
-
-**Código Fonte (run.chr13-chr19.pon.sh e run.chr13-chr19.sh)**
-
-```bash
-
-# variaveis fixas
-gnomad="af-only-gnomad-chr13-chr19.vcf.gz"
-interval="hg19.interval_list"
-genome="hg19.fa"
-
-# bam e ids 
-tumor=$1
-normal=$2
-id_tumor=$3
-id_normal=$4
-
-# rodando mutect2
-./gatk-4.2.2.0/gatk Mutect2 \
-	-R $genome \
-	-I $tumor \
-	-I $normal \
-	-normal $id_normal \
-	--germline-resource $gnomad \
-	-O $id_tumor.somatic.vcf.gz \
-	-L $interval
-
-# getPileup tumor
-./gatk-4.2.2.0/gatk GetPileupSummaries \
-	-I $tumor \
-	-V $gnomad \
-	-L $interval \
-	-O $id_tumor.table
-
-# getPileup normal
-./gatk-4.2.2.0/gatk GetPileupSummaries \
-	-I $normal \
-	-V $gnomad \
-	-L $interval \
-	-O $id_normal.table
-
-# CalculateContamination
-./gatk-4.2.2.0/gatk CalculateContamination \
-	-I $id_tumor.table \
-	-matched $id_normal.table \
-	-O $id_tumor.contamination.table
-
-# FilterMutectCalls
-./gatk-4.2.2.0/gatk FilterMutectCalls \
-	-R $genome \
-	-V $id_tumor.somatic.vcf.gz \
-	--contamination-table $id_tumor.contamination.table \
-	-O $id_tumor.filtered.vcf.gz
-
-```
-
-Rodar amostras extras com Panel of Normal (broad institute).
-
-```bash
-
-# variaveis fixas
-gnomad="af-only-gnomad-chr13-chr19.vcf.gz"
-interval="hg19.interval_list"
-genome="hg19.fa"
-pon="Mutect2-exome-panel.vcf"
-
-# bam e ids 
-tumor=$1
-id_tumor=$3
-
-# rodando mutect2
-./gatk-4.2.2.0/gatk Mutect2 \
-	-R $genome \
-	-I $tumor \
-	--germline-resource $gnomad \
-	--panel-of-normals $pon \
-	-O $id_tumor.somatic.pon.vcf.gz \
-	-L $interval
-
-# getPileup tumor
-./gatk-4.2.2.0/gatk GetPileupSummaries \
-	-I $tumor \
-	-V $gnomad \
-	-L $interval \
-	-O $id_tumor.pon.table
-
-# CalculateContamination
-./gatk-4.2.2.0/gatk CalculateContamination \
-	-I $id_tumor.pon.table \
-	-O $id_tumor.contamination.pon.table
-
-# FilterMutectCalls
-./gatk-4.2.2.0/gatk FilterMutectCalls \
-	-R $genome \
-	-V $id_tumor.somatic.pon.vcf.gz \
-	--contamination-table $id_tumor.contamination.pon.table \
-	-O $id_tumor.filtered.pon.vcf.gz
-```
+Distribuído sob a licença MIT. Consulte `LICENSE`.
