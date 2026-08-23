@@ -1,19 +1,44 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -Eeuo pipefail
 
-# Diretório de saída
-mkdir -p vep_output
-chmod 777 vep_output
+input=${1:-filtered.vcf.gz}
+output=${2:-vep_output/filtered.vep.tsv}
+
+VEP_IMAGE=${VEP_IMAGE:-ensemblorg/ensembl-vep:release_116.0}
+REFERENCE_FASTA=${REFERENCE_FASTA:-chr9.fa}
+
+for file in "$input" "$REFERENCE_FASTA"; do
+  [[ -f "$file" ]] || {
+    printf 'Erro: arquivo não encontrado: %s\n' "$file" >&2
+    exit 1
+  }
+done
+
+command -v docker >/dev/null 2>&1 || {
+  printf 'Erro: Docker não está instalado ou não está no PATH.\n' >&2
+  exit 1
+}
+
+mkdir -p "$(dirname "$output")"
 
 docker run --rm \
+  --user "$(id -u):$(id -g)" \
   -v "$(pwd)":/data \
   -w /data \
-  ensemblorg/ensembl-vep \
+  "$VEP_IMAGE" \
   vep \
-  -i filtered.vcf.gz \
-  -o vep_output/filtered.vep.tsv \
-  --database --assembly GRCh37 --refseq \
-  --pick --pick_allele --force_overwrite --tab --symbol --check_existing \
-  --fields "Location,SYMBOL,Consequence,Feature,Amino_acids,CLIN_SIG" \
-  --fasta chr9.fa \
-  --individual all
+  --input_file "$input" \
+  --output_file "$output" \
+  --database \
+  --assembly GRCh37 \
+  --refseq \
+  --fasta "$REFERENCE_FASTA" \
+  --pick \
+  --pick_allele \
+  --tab \
+  --symbol \
+  --check_existing \
+  --force_overwrite \
+  --fields "Uploaded_variation,Location,Allele,SYMBOL,Consequence,Feature,HGVSc,HGVSp,Amino_acids,Existing_variation,CLIN_SIG"
+
+printf 'Concluído. Anotação: %s\n' "$output"

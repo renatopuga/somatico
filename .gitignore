@@ -1,0 +1,21 @@
+# Referências e ferramentas baixadas durante a aula
+gatk-*/
+gatk-*.zip
+chr*.fa
+chr*.fa.gz
+*.dict
+*.interval_list
+Mutect2-exome-panel.vcf*
+
+# Resultados gerados
+results/
+vep_output/
+*.somatic*.vcf.gz*
+*.filtered*.vcf.gz*
+*.pileups.table
+*.contamination*.table
+*.vep.tsv
+
+# Arquivos temporários
+.ipynb_checkpoints/
+*.log
