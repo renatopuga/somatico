@@ -1,0 +1,75 @@
+{
+  "vep": {
+    "GRCh37:9:5073770:G:T": {
+      "fonte": "vep_104_3_historico",
+      "referencias": [
+        "https://github.com/renatopuga/somatico/blob/1a30e28e3cd9646c7a7172a87efe530383b93d98/somatico_google_colab.ipyhb",
+        "https://www.ncbi.nlm.nih.gov/clinvar/148777007/"
+      ],
+      "tabela": [
+        {
+          "symbol": "JAK2",
+          "transcript": "NM_001322194.2",
+          "consequence": "missense_variant",
+          "hgvsc": "NM_001322194.2:c.1849G>T",
+          "hgvsp": "NP_001309123.1:p.Val617Phe",
+          "amino_acids": "V/F"
+        }
+      ]
+    }
+  },
+  "civic": {
+    "origem": {
+      "descricao": "Recorte didático do EID1 documentado na API histórica do CIViC. Asserções e outros itens não estão incluídos. O identificador didatico-VID64 liga as tabelas locais.",
+      "fontes": [
+        "https://griffithlab.github.io/civic-api-docs/#evidence-items",
+        "https://civicdb.org/variants/64",
+        "https://pubmed.ncbi.nlm.nih.gov/16081687/"
+      ],
+      "licenca_dados": "CC0-1.0"
+    },
+    "tabelas": {
+      "variantes": [
+        {
+          "variant_id": "64",
+          "variant_civic_url": "https://civicdb.org/variants/64",
+          "variant": "V617F",
+          "gene": "JAK2",
+          "chromosome": "9",
+          "start": "5073770",
+          "stop": "5073770",
+          "reference_bases": "G",
+          "variant_bases": "T",
+          "reference_build": "GRCh37",
+          "hgvs_descriptions": "NM_001322194.2:c.1849G>T,NM_004972.4:c.1849G>T",
+          "single_variant_molecular_profile_id": "didatico-VID64"
+        }
+      ],
+      "perfis": [
+        {
+          "molecular_profile_id": "didatico-VID64",
+          "name": "JAK2 V617F",
+          "variant_ids": "64"
+        }
+      ],
+      "evidencias": [
+        {
+          "molecular_profile_id": "didatico-VID64",
+          "evidence_id": "1",
+          "evidence_civic_url": "https://civicdb.org/evidence/1",
+          "disease": "Lymphoid Leukemia",
+          "doid": "10747",
+          "evidence_type": "Diagnostic",
+          "evidence_direction": "Supports",
+          "evidence_level": "B",
+          "significance": "Negative",
+          "evidence_status": "accepted",
+          "source_type": "PubMed",
+          "citation_id": "16081687",
+          "citation": "Levine et al., 2005, Blood"
+        }
+      ],
+      "assercoes": []
+    }
+  }
+}

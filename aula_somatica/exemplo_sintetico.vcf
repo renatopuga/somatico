@@ -1,0 +1,13 @@
+##fileformat=VCFv4.2
+##source=exemplo_sintetico_aula
+##reference=GRCh37
+##contig=<ID=9,length=141213431>
+##FILTER=<ID=low_support,Description="Suporte baixo no exemplo sintético">
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genótipo">
+##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Profundidade">
+##FORMAT=<ID=AD,Number=R,Type=Integer,Description="Leituras de referência e alternativas">
+##FORMAT=<ID=AF,Number=A,Type=Float,Description="Fração do alelo alternativo">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	TUMOR_DEMO	NORMAL_DEMO
+9	5073681	.	C	CT	.	PASS	.	GT:DP:AD:AF	0/1:100:87,13:0.13	0/0:80:80,0:0
+9	5073770	rs77375493	G	T	.	PASS	.	GT:DP:AD:AF	0/1:100:72,28:0.28	0/0:80:80,0:0
+9	5073770	.	G	A	.	low_support	.	GT:DP:AD:AF	0/1:100:99,1:0.01	0/0:80:80,0:0
