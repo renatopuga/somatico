@@ -6,6 +6,23 @@
 # Análise Somática
 GATK 4 Mutect2 Somático
 
+## Aula no Colab · da chamada à revisão especializada
+
+Abra o [notebook de interpretação somática](somatico_interpretacao_colab.ipynb) no Google Colab com runtime **CPU**. A prática conecta Mutect2 ou um VCF do DRAGEN ao Ensembl VEP, CIViC, AMP/ASCO/CAP e à revisão por outra dupla.
+
+| Configuração | Entrada |
+|---|---|
+| `MODO="bams_aula"` | BAMs WP043/WP044 do repositório e referência do cromossomo 9 em GRCh37. O primeiro uso baixa o GATK 4.6.2.0 (cerca de 700 MB) e o FASTA. |
+| `MODO="vcf_pronto"` com `VCF_ENTRADA` preenchido | Um VCF somático filtrado, seu FASTA e o nome da amostra tumoral. Se houver normal pareado, preencha também `NORMAL_VCF`. |
+| `MODO="vcf_pronto"` com `VCF_ENTRADA` vazio | Exemplo sintético com JAK2 V617F. Selecione `recorte` em `VEP_FONTE` e `CIVIC_FONTE` para a prática sem consultas aos serviços de anotação. |
+
+- **Recursos já baixados.** `FASTA` e `GATK_JAR` permitem usar arquivos locais. Para CIViC mensal, `CIVIC_PASTA` aceita os quatro TSVs de variantes, perfis moleculares, evidências aceitas e asserções aceitas da release informada. Para retornar ao VEP a partir de um resultado salvo, selecione `arquivo` e use `VEP_ARQUIVO`.
+- **VCF próprio.** Informe GRCh37 ou GRCh38 e use o FASTA da mesma montagem e com os mesmos contigs. Habilite o VEP REST explicitamente se quiser enviar as coordenadas e alelos ao Ensembl. O modo `arquivo` usa um `vep_response.json` previamente exportado.
+- **Exercício.** Compare JAK2 V617F no par da aula com um cenário fictício de policitemia vera. Revise a evidência em seu contexto e registre a proposta e a decisão em `review.tsv`.
+- **Entrega.** O ZIP reúne `variants.tsv`, `civic_evidence.tsv`, `review.tsv`, `vep_response.json` e `run_manifest.json`. O manifesto diferencia a origem das chamadas, as anotações históricas e a release de evidência usada.
+
+[Colab](https://colab.research.google.com/) · [Releases CIViC](https://civicdb.org/releases) · [AMP/ASCO/CAP](https://pubmed.ncbi.nlm.nih.gov/27993330/)
+
 # Aula Prática
 
 ![image](https://user-images.githubusercontent.com/8321336/130251648-7ad77cae-435f-49be-950f-b7af5f59fd7a.png)
